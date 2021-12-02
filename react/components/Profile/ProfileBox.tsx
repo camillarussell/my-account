@@ -1,7 +1,6 @@
 /* eslint-disable react/prop-types */
 import type { FunctionComponent } from 'react'
 import React, { Fragment } from 'react'
-import { FormattedMessage } from 'react-intl'
 import { ExtensionPoint, withRuntimeContext } from 'vtex.render-runtime'
 import { ProfileRules, ProfileSummary } from 'vtex.profile-form'
 import { useCssHandles } from 'vtex.css-handles'
@@ -12,8 +11,6 @@ import DataEntry from '../shared/DataEntry'
 const CSS_HANDLES = [
   'profileBoxContainer',
   'nameContainer',
-  'firstNameSubContainer',
-  'lastNameSubContainer',
   'emailContainer',
   'genderContainer',
   'documentsSubContainer',
@@ -31,24 +28,26 @@ const CSS_HANDLES = [
 
 const ProfileBox: FunctionComponent<Props> = ({
   profile,
-  onEditClick,
+  procurator,
   runtime,
 }) => {
   const cssHandles = useCssHandles(CSS_HANDLES)
 
-  if (!profile) return null
+  if (!profile || !procurator) return null
+
+  const fullName = procurator.name.split(' ')
+  const procuratorFirstName = fullName[0]
+  const procuratorLastName = fullName.length > 1 ? fullName[fullName.length - 1] : ''
+
+  const compoundProfile = {...profile, firstName: procuratorFirstName, lastName: procuratorLastName, email: procurator.procurator_email}
 
   return (
     <div className={cssHandles.profileBoxContainer}>
       <ContentBox
         shouldAllowGrowing
-        lowerButton={
-          <FormattedMessage id="vtex.store-messages@0.x::commons.edit" />
-        }
-        onLowerButtonClick={onEditClick}
       >
         <ProfileRules country={runtime.culture.country} shouldUseIOFetching>
-          <ProfileSummary profile={profile}>
+          <ProfileSummary profile={compoundProfile}>
             {({
               personalData: {
                 firstName,
@@ -73,18 +72,14 @@ const ProfileBox: FunctionComponent<Props> = ({
                   className={`flex-ns flex-wrap ${cssHandles.nameContainer}`}
                 >
                   <div
-                    className={`mb8 flex-auto ${cssHandles.firstNameSubContainer}`}
+                    className={`mb8 w-50-ns ${cssHandles.firstNameSubContainer}`}
                   >
-                    <DataEntry label={firstName.label}>
-                      {firstName.value}
-                    </DataEntry>
+                    <DataEntry label={firstName.label}>{firstName.value}</DataEntry>
                   </div>
                   <div
                     className={`mb8 w-50-ns ${cssHandles.lastNameSubContainer}`}
                   >
-                    <DataEntry label={lastName.label}>
-                      {lastName.value}
-                    </DataEntry>
+                    <DataEntry label={lastName.label}>{lastName.value}</DataEntry>
                   </div>
                 </div>
                 <div className={`mb8 ${cssHandles.emailContainer}`}>
@@ -194,6 +189,7 @@ const ProfileBox: FunctionComponent<Props> = ({
 
 interface Props {
   profile: Profile
+  procurator: ProcuratorData
   runtime: Runtime
   onEditClick: () => void
 }
